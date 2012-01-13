@@ -5,8 +5,6 @@ import System.Environment
 import Text.HTML.TagSoup
 
 import Daemon
-import Unternehmen
-import Wixxer
 
 main :: IO ()
 main = do

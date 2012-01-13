@@ -5,7 +5,6 @@ import qualified Data.Text as T
 import Network.HTTP
 import System.Environment
 import Text.HTML.TagSoup
-import Unternehmen
 
 usage :: IO ()
 usage = putStrLn "daemon path [print | count words ...]"
