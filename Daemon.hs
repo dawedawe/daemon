@@ -3,11 +3,8 @@ module Daemon where
 import Data.Char
 import qualified Data.Text as T
 import Network.HTTP
-import System.Environment
+import Network.Browser
 import Text.HTML.TagSoup
-
-usage :: IO ()
-usage = putStrLn "daemon path [print | count words ...]"
 
 getUrls :: FilePath -> IO [String]
 getUrls path = do
@@ -16,7 +13,7 @@ getUrls path = do
 
 getFeedTitleStrings :: String -> IO [String]
 getFeedTitleStrings url = do
-	tags <- fmap parseTags $ getPage url
+	tags <- fmap parseTags $ getPage' (Proxy "localhost:8118" Nothing) url
 	let titles = partitions (~== "<title>") tags
 	return $ map (fromTagText . (!! 1)) titles
 
@@ -38,6 +35,15 @@ getAndPrintHeadlines urls = do
 getPage :: String -> IO String
 getPage url = simpleHTTP (getRequest url) >>= getResponseBody
 
+getPage' :: Proxy -> String -> IO String
+getPage' proxy url =
+	do
+		(_,rsp) <- Network.Browser.browse $ do
+			setProxy proxy
+			setOutHandler $ const (return ())
+			request (getRequest url)
+		return (rspBody rsp)
+
 countWordInWords :: String -> [String] -> Int
 countWordInWords "" _ = 0
 countWordInWords _ [] = 0
@@ -53,10 +59,10 @@ countWordInWords w ws = helper (T.pack w) 0 (map T.pack ws)
 			| otherwise				= helper w' i xs
 
 countWordsInWords :: [String] -> [String] -> [Int]
-countWordsInWords swords words = countWordsInWords' lswords lwords
+countWordsInWords swords wrds = countWordsInWords' lswords lwords
 	where
 		lswords = (map lowerString swords)
-		lwords  = (map lowerString words)
+		lwords  = (map lowerString wrds)
 		countWordsInWords' :: [String] -> [String] -> [Int]
 		countWordsInWords' [] _ = []
 		countWordsInWords' _ [] = []

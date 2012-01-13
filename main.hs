@@ -1,8 +1,4 @@
-import Data.Char
-import qualified Data.Text as T
-import Network.HTTP
 import System.Environment
-import Text.HTML.TagSoup
 
 import Daemon
 
@@ -14,6 +10,10 @@ main = do
 		else do
 				urls <- getUrls $ args !! 0
 				case args of
-					[path, "print"] -> getAndPrintHeadlines urls
-					(path:"count": keywords) -> countAndPrint urls keywords
+					[_, "print"] -> getAndPrintHeadlines urls
+					(_:"count": keywords) -> countAndPrint urls keywords
 					_ -> usage
+
+usage :: IO ()
+usage = putStrLn "daemon path [print | count words ...]"
+
