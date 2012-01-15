@@ -1,5 +1,7 @@
 module Daemon where
 
+import qualified Data.ConfigFile as CF
+import Data.Either.Utils (forceEither)
 import Data.Char
 import qualified Data.Text as T
 import Network.HTTP
@@ -13,7 +15,7 @@ getUrls path = do
 
 getFeedTitleStrings :: String -> IO [String]
 getFeedTitleStrings url = do
-	tags <- fmap parseTags $ getPage' (Proxy "localhost:8118" Nothing) url
+	tags <- fmap parseTags $ getPage' url
 	let titles = partitions (~== "<title>") tags
 	return $ map (fromTagText . (!! 1)) titles
 
@@ -35,9 +37,14 @@ getAndPrintHeadlines urls = do
 getPage :: String -> IO String
 getPage url = simpleHTTP (getRequest url) >>= getResponseBody
 
-getPage' :: Proxy -> String -> IO String
-getPage' proxy url =
+getPage' :: String -> IO String
+getPage' url =
 	do
+		val <- CF.readfile CF.emptyCP "./daemon.conf"
+		let cp = forceEither val
+		let confitems = forceEither $ CF.items cp "DEFAULT"
+		let proxy = p $ lookup "proxy" confitems
+
 		(_,rsp) <- Network.Browser.browse $ do
 			setProxy proxy
 			setOutHandler $ const (return ())
@@ -77,3 +84,7 @@ flatten = foldl (++) []
 
 lowerString :: String -> String
 lowerString s = map toLower s
+
+p :: Maybe String -> Proxy
+p Nothing = NoProxy
+p (Just s) = Proxy s Nothing

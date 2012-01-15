@@ -16,4 +16,3 @@ main = do
 
 usage :: IO ()
 usage = putStrLn "daemon path [print | count words ...]"
-
