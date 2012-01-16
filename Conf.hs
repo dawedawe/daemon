@@ -34,4 +34,3 @@ getUrls path = do
 	s <- readFile path
 	return $ lines s
 
-
