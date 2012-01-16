@@ -1,53 +1,40 @@
 module Daemon where
 
-import qualified Data.ConfigFile as CF
-import Data.Either.Utils (forceEither)
 import Data.Char
 import qualified Data.Text as T
 import Network.HTTP
 import Network.Browser
 import Text.HTML.TagSoup
 
-getUrls :: FilePath -> IO [String]
-getUrls path = do
-	s <- readFile path
-	return $ lines s
+import Conf
 
-getFeedTitleStrings :: String -> IO [String]
-getFeedTitleStrings url = do
-	tags <- fmap parseTags $ getPage' url
+getFeedTitleStrings :: Proxy -> String -> IO [String]
+getFeedTitleStrings prox url = do
+	tags <- fmap parseTags $ getPage' prox url
 	let titles = partitions (~== "<title>") tags
 	return $ map (fromTagText . (!! 1)) titles
 
 printFeedTitleStrings :: [String] -> IO ()
 printFeedTitleStrings s = mapM_ putStrLn s
 
-countAndPrint :: [String] -> [String] -> IO ()
-countAndPrint urls keywords = do
-	ts <- mapM getFeedTitleStrings urls
+countAndPrint :: Conf -> [String] -> IO ()
+countAndPrint conf keywords = do
+	ts <- mapM (getFeedTitleStrings (proxy conf)) (urls conf)
 	let flattened_ts = flatten ts
 	let counts = countWordsInWords keywords flattened_ts
 	mapM_ (putStrLn . comb) $ zip keywords counts
 
-getAndPrintHeadlines :: [String] -> IO ()
-getAndPrintHeadlines urls = do
-	ts <- mapM getFeedTitleStrings urls
+getAndPrintHeadlines :: Conf -> IO ()
+getAndPrintHeadlines conf = do
+	ts <- mapM (getFeedTitleStrings (proxy conf)) (urls conf)
 	mapM_ printFeedTitleStrings ts
 
-getPage :: String -> IO String
-getPage url = simpleHTTP (getRequest url) >>= getResponseBody
-
-getPage' :: String -> IO String
-getPage' url =
+getPage' :: Proxy -> String -> IO String
+getPage' prox url =
 	do
-		val <- CF.readfile CF.emptyCP "./daemon.conf"
-		let cp = forceEither val
-		let confitems = forceEither $ CF.items cp "DEFAULT"
-		let proxy = p $ lookup "proxy" confitems
-
 		(_,rsp) <- Network.Browser.browse $ do
-			setProxy proxy
-			setOutHandler $ const (return ())
+			setProxy prox
+			setOutHandler $ const (return ()) -- no debug output
 			request (getRequest url)
 		return (rspBody rsp)
 
@@ -85,6 +72,4 @@ flatten = foldl (++) []
 lowerString :: String -> String
 lowerString s = map toLower s
 
-p :: Maybe String -> Proxy
-p Nothing = NoProxy
-p (Just s) = Proxy s Nothing
+	
