@@ -18,8 +18,9 @@ countAndPrint conf keywords = do
 	ts <- mapM (getFeedTitleStrings (proxy conf)) (urls conf)
 	let flattened_ts = flatten ts
 	let counts = countWordsInWords keywords flattened_ts
-	mapM_ (putStrLn . comb) $ zip keywords (map fst counts)
-	mapM_ (putStrLn . comb') $ zip keywords counts
+	if verbose conf == True
+		then mapM_ (putStrLn . comb') $ zip keywords counts
+		else mapM_ (putStrLn . comb) $ zip keywords (map fst counts)
 
 getFeedTitleStrings :: Proxy -> String -> IO [String]
 getFeedTitleStrings prox url = do
