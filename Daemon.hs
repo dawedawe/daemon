@@ -1,4 +1,7 @@
-module Daemon where
+module Daemon
+( getAndPrintHeadlines
+, countAndPrint
+) where
 
 import Data.Char
 import qualified Data.Text as T
