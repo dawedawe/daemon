@@ -1,33 +1,85 @@
 module Conf
 ( Conf (..)
+, Options (..)
 , buildConf
+, parseArgv
 ) where
 
 import qualified Data.ConfigFile as CF
 import Data.Either.Utils (forceEither)
 import Data.Maybe (fromJust)
 import Network.Browser
+import System.Console.GetOpt
 
-data Conf = Conf {
-	verbose	:: Bool,
-	proxy :: Proxy,
-	urls :: [String],
-	tasks :: [Task]
-}
+data Conf = Conf
+	{ opts		:: Options
+	, proxy		:: Proxy
+	, urls		:: [String]
+	, tasks		:: [Task] }
 
-data Task = Task {
-	keyword :: String,
-	threshold :: Int,
-	action :: String
-}
+data Task = Task
+	{ keyword	:: String
+	, threshold	:: Int
+	, action	:: String }
 
-buildConf :: FilePath -> FilePath -> IO Conf
-buildConf confpath feedpath = do
-	items		<- getConfItems confpath
-	feedurls	<- getUrls feedpath
+data Options = Options
+	{ optVerbose	:: Bool
+	, optConfigPath	:: FilePath
+	, optFeedsPath	:: FilePath
+	, optPrint		:: Bool
+	, optCount		:: Bool
+	, optKeywords	:: [String]
+	} deriving Show
+
+defaultOptions :: Options
+defaultOptions = Options
+	{ optVerbose	= False
+	, optConfigPath = "./daemon.conf"
+	, optFeedsPath	= "./feeds"
+	, optPrint		= False
+	, optCount		= False
+	, optKeywords	= []
+	}
+
+options :: [OptDescr (Options -> Options)]
+options =
+	[ Option ['v'] ["verbose"]
+			 (NoArg (\optns -> optns { optVerbose = True }))
+			 "verbose output"
+	, Option ['C'] ["config"]
+			 (ReqArg (\p optns -> optns {optConfigPath = p }) "PATH")
+			 "filepath to config"
+	, Option ['f'] ["feedspath"]
+			 (ReqArg (\p optns -> optns { optFeedsPath = p }) "PATH")
+			 "filepath to feeds"
+	, Option ['p'] ["print"]
+			 (NoArg (\optns -> optns { optPrint = True }))
+			 "print feeds"
+	, Option ['c'] ["count"]
+			 (ReqArg (\d optns -> optns { optCount = True,
+			 optKeywords = optKeywords optns ++ [d] }) "KEYWORD ...")
+			 "keyword to count"
+	]
+
+parseArgv :: [String] -> IO (Options, [String]) 
+parseArgv argv =
+	let
+		opt = getOpt RequireOrder options argv
+	in
+		case opt of
+			(o,n,[]  ) -> return (foldl (flip id) defaultOptions o, n)
+			(_,_,errs) -> ioError (userError
+							(concat errs ++ usageInfo header options))
+      	where header = "Usage: daemon [-v] [-f feedspath] " ++
+						"[-p | -c word -c ...]"
+
+buildConf :: Options -> IO Conf
+buildConf o = do
+	items		<- getConfItems $ optConfigPath o
+	feedurls	<- getUrls $ optFeedsPath o
 	let prx		= getProxyConf items
 	let ts		= getTasks items
-	return $ Conf True prx feedurls ts
+	return $ Conf o prx feedurls ts
 
 getConfItems :: FilePath -> IO [(CF.OptionSpec, String)]
 getConfItems path = do
