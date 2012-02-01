@@ -17,6 +17,7 @@ main = do
 			putStrLn $ "-p " ++ (show $ optPrint parsedOptions)
 			putStrLn $ "-c " ++ (show $ optCount parsedOptions)
 			putStrLn $ "keywords " ++ (unwords $ optKeywords parsedOptions)
+			putStrLn $ "-t " ++ (show $ optTasks parsedOptions)
 		else return ()
 
 	conf <- buildConf parsedOptions
