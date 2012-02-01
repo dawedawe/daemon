@@ -13,6 +13,26 @@ data Options = Options
 	, optKeywords	:: [String]
 	} deriving Show
 
+main :: IO ()
+main = do
+	args <- getArgs
+	parsedArgv <- parseArgv args
+	let parsedOptions = fst parsedArgv
+	putStrLn $ "-v " ++ (show $ optVerbose parsedOptions)
+	putStrLn $ "-C " ++ (optConfigPath parsedOptions)
+	putStrLn $ "-f " ++ (optFeedsPath parsedOptions)
+	putStrLn $ "-p " ++ (show $ optPrint parsedOptions)
+	putStrLn $ "-c " ++ (show $ optCount parsedOptions)
+	putStrLn $ "keywords " ++ (unwords $ optKeywords parsedOptions)
+
+	conf <- buildConf (optConfigPath parsedOptions) (optFeedsPath parsedOptions)
+	if (optPrint parsedOptions)
+		then getAndPrintHeadlines conf
+		else return ()
+	if (optCount parsedOptions)
+		then countAndPrint conf (optKeywords parsedOptions)
+		else return ()
+
 defaultOptions :: Options
 defaultOptions = Options
 	{ optVerbose	= False
@@ -42,26 +62,6 @@ options =
 			 optKeywords = optKeywords opts ++ [d] }) "KEYWORD ...")
 			 "keyword to count"
 	]
-
-main :: IO ()
-main = do
-	args <- getArgs
-	parsedArgv <- parseArgv args
-	let parsedOptions = fst parsedArgv
-	putStrLn $ "-v " ++ (show $ optVerbose parsedOptions)
-	putStrLn $ "-C " ++ (optConfigPath parsedOptions)
-	putStrLn $ "-f " ++ (optFeedsPath parsedOptions)
-	putStrLn $ "-p " ++ (show $ optPrint parsedOptions)
-	putStrLn $ "-c " ++ (show $ optCount parsedOptions)
-	putStrLn $ "keywords " ++ (unwords $ optKeywords parsedOptions)
-
-	conf <- buildConf (optConfigPath parsedOptions) (optFeedsPath parsedOptions)
-	if (optPrint parsedOptions)
-		then getAndPrintHeadlines conf
-		else return ()
-	if (optCount parsedOptions)
-		then countAndPrint conf (optKeywords parsedOptions)
-		else return ()
 
 parseArgv :: [String] -> IO (Options, [String]) 
 parseArgv argv =
