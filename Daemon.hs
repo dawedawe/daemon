@@ -1,6 +1,7 @@
 module Daemon
 ( getAndPrintHeadlines
 , countAndPrint
+, runTasks
 ) where
 
 import Data.Char
@@ -19,23 +20,38 @@ getAndPrintHeadlines conf = do
 countAndPrint :: Conf -> [String] -> IO ()
 countAndPrint conf keywords = do
 	ts <- mapM (getFeedTitleStrings (proxy conf)) (urls conf)
-	let flattened_ts = flatten ts
+	let flattened_ts = prepareNewsData ts
 	let counts = countWordsInWords keywords flattened_ts
 	if optVerbose (opts conf) == True
 		then mapM_ (putStrLn . comb') $ zip keywords counts
 		else mapM_ (putStrLn . comb) $ zip keywords (map fst counts)
 
+runTasks :: Conf -> IO ()
+runTasks conf = do
+	ts <- mapM (getFeedTitleStrings (proxy conf)) (urls conf)
+	let lfts = prepareNewsData ts
+	mapM_ (runTask lfts) (tasks conf)
+
+runTask :: [String] -> Task -> IO ()
+runTask news t = do
+	let count = countWordInWords (keyword t) news
+	if count >= (threshold t)
+		then do putStrLn ("Threshold " ++ (show (threshold t)) ++
+				" exceeded for " ++ (keyword t))
+		else do putStrLn ("Threshold " ++ (show (threshold t)) ++ " for " ++
+				(keyword t) ++ " not exceeded")
+
 getFeedTitleStrings :: Proxy -> String -> IO [String]
 getFeedTitleStrings prox url = do
-	tags <- fmap parseTags $ getPage' prox url
+	tags <- fmap parseTags $ getPage prox url
 	let titles = partitions (~== "<title>") tags
 	return $ map (fromTagText . (!! 1)) titles
 
 printFeedTitleStrings :: [String] -> IO ()
 printFeedTitleStrings s = mapM_ putStrLn s
 
-getPage' :: Proxy -> String -> IO String
-getPage' prox url =
+getPage :: Proxy -> String -> IO String
+getPage prox url =
 	do
 		(_,rsp) <- Network.Browser.browse $ do
 			setProxy prox
@@ -43,11 +59,12 @@ getPage' prox url =
 			request (getRequest url)
 		return (rspBody rsp)
 
+prepareNewsData :: [[String]] -> [String]
+prepareNewsData news = map lowerString $ flatten news
+
 countWordsInWords :: [String] -> [String] -> [(Int, [T.Text])]
-countWordsInWords swords wrds = countWordsInWords' lswords lwords
+countWordsInWords swords wrds = countWordsInWords' swords wrds
 	where
-		lswords = (map lowerString swords)
-		lwords  = (map lowerString wrds)
 		countWordsInWords' :: [String] -> [String] -> [(Int, [T.Text])]
 		countWordsInWords' [] _ = []
 		countWordsInWords' _ [] = []
@@ -57,7 +74,7 @@ countWordsInWords swords wrds = countWordsInWords' lswords lwords
 countWordInWords :: String -> [String] -> Int
 countWordInWords "" _ = 0
 countWordInWords _ [] = 0
-countWordInWords w ws = helper (T.pack w) 0 (map T.pack ws)
+countWordInWords w ws = helper (T.pack (lowerString w)) 0 (map T.pack ws)
 	where
 		helper :: T.Text -> Int -> [T.Text] -> Int
 		helper _ _ []				= 0
@@ -71,7 +88,7 @@ countWordInWords w ws = helper (T.pack w) 0 (map T.pack ws)
 countWordInWords' :: String -> [String] -> (Int, [T.Text])
 countWordInWords' "" _ = (0, [])
 countWordInWords' _ [] = (0, [])
-countWordInWords' w ws = helper (T.pack w) (0, []) (map T.pack ws)
+countWordInWords' w ws = helper (T.pack (lowerString w)) (0, []) (map T.pack ws)
 	where
 		helper :: T.Text -> (Int, [T.Text]) -> [T.Text] -> (Int, [T.Text])
 		helper _ _ []				= (0, [])
@@ -81,7 +98,6 @@ countWordInWords' w ws = helper (T.pack w) (0, []) (map T.pack ws)
 		helper w' (i, ins) (x:xs)
 			| (T.isInfixOf w' x)	= helper w' ((i+1), (x : ins)) xs
 			| otherwise				= helper w' (i, ins) xs
-
 
 comb :: (String, Int) -> String
 comb (a, b) = a ++ "\t" ++ (show b)

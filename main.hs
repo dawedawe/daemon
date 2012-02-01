@@ -20,10 +20,13 @@ main = do
 		else return ()
 
 	conf <- buildConf parsedOptions
-	if (optPrint parsedOptions)
+	if (optPrint $ opts $ conf)
 		then getAndPrintHeadlines conf
 		else return ()
-	if (optCount parsedOptions)
+	if (optCount $ opts $ conf)
 		then countAndPrint conf (optKeywords parsedOptions)
+		else return ()
+	if (optTasks $ opts $ conf)
+		then runTasks conf
 		else return ()
 

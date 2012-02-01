@@ -1,6 +1,7 @@
 module Conf
 ( Conf (..)
 , Options (..)
+, Task (..)
 , buildConf
 , parseArgv
 ) where
@@ -29,6 +30,7 @@ data Options = Options
 	, optPrint		:: Bool
 	, optCount		:: Bool
 	, optKeywords	:: [String]
+	, optTasks		:: Bool
 	} deriving Show
 
 defaultOptions :: Options
@@ -39,6 +41,7 @@ defaultOptions = Options
 	, optPrint		= False
 	, optCount		= False
 	, optKeywords	= []
+	, optTasks		= False
 	}
 
 options :: [OptDescr (Options -> Options)]
@@ -59,6 +62,9 @@ options =
 			 (ReqArg (\d optns -> optns { optCount = True,
 			 optKeywords = optKeywords optns ++ [d] }) "KEYWORD ...")
 			 "keyword to count"
+	, Option ['t'] ["tasks"]
+			 (NoArg (\optns -> optns { optTasks = True }))
+			 "run tasks"
 	]
 
 parseArgv :: [String] -> IO (Options, [String]) 
@@ -71,7 +77,7 @@ parseArgv argv =
 			(_,_,errs) -> ioError (userError
 							(concat errs ++ usageInfo header options))
       	where header = "Usage: daemon [-v] [-f feedspath] " ++
-						"[-p | -c word -c ...]"
+						"[-p | -c word -c ... | -t]"
 
 buildConf :: Options -> IO Conf
 buildConf o = do
