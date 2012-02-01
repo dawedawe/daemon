@@ -15,8 +15,7 @@ data Options = Options
 
 main :: IO ()
 main = do
-	args <- getArgs
-	parsedArgv <- parseArgv args
+	parsedArgv <- (getArgs >>= parseArgv)
 	let parsedOptions = fst parsedArgv
 	putStrLn $ "-v " ++ (show $ optVerbose parsedOptions)
 	putStrLn $ "-C " ++ (optConfigPath parsedOptions)
