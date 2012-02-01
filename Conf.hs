@@ -124,6 +124,5 @@ getTask items n =
 		Task kwd thd act
 
 getUrls :: FilePath -> IO [String]
-getUrls path = do
-	s <- readFile path
-	return $ lines s
+getUrls path =
+	readFile path >>= (return . lines)
