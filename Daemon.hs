@@ -8,6 +8,7 @@ import Data.Char
 import qualified Data.Text as T
 import Network.HTTP
 import Network.Browser
+import System.Process (runCommand)
 import Text.HTML.TagSoup
 
 import Conf
@@ -36,8 +37,11 @@ runTask :: [String] -> Task -> IO ()
 runTask news t = do
 	let count = countWordInWords (keyword t) news
 	if count >= (threshold t)
-		then do putStrLn ("Threshold " ++ (show (threshold t)) ++
-				" exceeded for " ++ (keyword t))
+		then do
+				putStrLn ("Threshold " ++ (show (threshold t)) ++
+					" exceeded for " ++ (keyword t))
+				_ <- runCommand $ action t
+				return ()
 		else do putStrLn ("Threshold " ++ (show (threshold t)) ++ " for " ++
 				(keyword t) ++ " not exceeded")
 
