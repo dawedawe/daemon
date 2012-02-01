@@ -8,7 +8,6 @@ module Conf
 
 import qualified Data.ConfigFile as CF
 import Data.Either.Utils (forceEither)
-import Data.Maybe (fromJust)
 import Network.Browser
 import System.Console.GetOpt
 
@@ -95,11 +94,11 @@ getConfItems path = do
 
 getProxyConf :: [(CF.OptionSpec, String)] -> Proxy
 getProxyConf items = do
-	mayToProxy $ lookup "proxy" items
+	maybeToProxy $ lookup "proxy" items
 	where
-		mayToProxy :: Maybe String -> Proxy
-		mayToProxy Nothing = NoProxy
-		mayToProxy (Just s) = Proxy s Nothing
+		maybeToProxy :: Maybe String -> Proxy
+		maybeToProxy Nothing  = NoProxy
+		maybeToProxy (Just s) = Proxy s Nothing
 
 getTasks :: [(CF.OptionSpec, String)] -> [Task]
 getTasks confitems =
@@ -117,12 +116,15 @@ getTask items n =
 		keywordN	= "keyword" ++ (show n)
 		thresholdN	= keywordN ++ "_threshold"
 		actionN		= keywordN ++ "_action"
-		kwd 		= fromJust (lookup keywordN items)
-		thd 		= read $ fromJust (lookup thresholdN items)
-		act 		= fromJust (lookup actionN items)
+		kwd 		= checkConfItem (lookup keywordN items) keywordN 
+		thd 		= read $ checkConfItem (lookup thresholdN items) thresholdN
+		act 		= checkConfItem (lookup actionN items) actionN
 	in
 		Task kwd thd act
 
 getUrls :: FilePath -> IO [String]
-getUrls path =
-	readFile path >>= (return . lines)
+getUrls path = readFile path >>= (return . lines)
+
+checkConfItem :: Maybe String -> String -> String
+checkConfItem (Just s) _ = s
+checkConfItem Nothing itemName = error $ "failed to parse " ++ itemName
