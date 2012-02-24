@@ -112,5 +112,5 @@ flatten :: [[a]] -> [a]
 flatten = foldl (++) []
 
 lowerString :: String -> String
-lowerString s = map toLower s
+lowerString = map toLower
 
