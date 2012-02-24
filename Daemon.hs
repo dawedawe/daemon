@@ -42,8 +42,8 @@ runTask news t = do
 	      " exceeded for " ++ (keyword t))
 	    _ <- runCommand $ action t
 	    return ()
-	  else putStrLn ("Threshold " ++ (show (threshold t)) ++ " for " ++
-	         (keyword t) ++ " not exceeded")
+	  else putStrLn ("Threshold " ++ (show (threshold t)) ++
+	         " not exceeded for " ++ (keyword t))
 
 getFeedTitleStrings :: Proxy -> String -> IO [String]
 getFeedTitleStrings prox url = do
