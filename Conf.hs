@@ -26,10 +26,10 @@ data Options = Options
 	{ optVerbose	:: Bool
 	, optConfigPath	:: FilePath
 	, optFeedsPath	:: FilePath
-	, optPrint		:: Bool
-	, optCount		:: Bool
+	, optPrint	:: Bool
+	, optCount	:: Bool
 	, optKeywords	:: [String]
-	, optTasks		:: Bool
+	, optTasks	:: Bool
 	} deriving Show
 
 defaultOptions :: Options
@@ -37,10 +37,10 @@ defaultOptions = Options
 	{ optVerbose	= False
 	, optConfigPath = "./daemon.conf"
 	, optFeedsPath	= "./feeds"
-	, optPrint		= False
-	, optCount		= False
+	, optPrint	= False
+	, optCount	= False
 	, optKeywords	= []
-	, optTasks		= False
+	, optTasks	= False
 	}
 
 options :: [OptDescr (Options -> Options)]
