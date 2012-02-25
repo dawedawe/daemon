@@ -10,14 +10,7 @@ main = do
 	let parsedOptions = fst parsedArgv
 
 	if (optVerbose parsedOptions)
-	  then do
-	    putStrLn $ "-v " ++ (show $ optVerbose parsedOptions)
-	    putStrLn $ "-C " ++ (optConfigPath parsedOptions)
-	    putStrLn $ "-f " ++ (optFeedsPath parsedOptions)
-	    putStrLn $ "-p " ++ (show $ optPrint parsedOptions)
-	    putStrLn $ "-c " ++ (show $ optCount parsedOptions)
-	    putStrLn $ "keywords " ++ (unwords $ optKeywords parsedOptions)
-	    putStrLn $ "-t " ++ (show $ optTasks parsedOptions)
+	  then putStrLn $ show parsedOptions
 	  else return ()
 
 	conf <- buildConf parsedOptions

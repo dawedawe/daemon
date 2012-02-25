@@ -30,7 +30,17 @@ data Options = Options
 	, optCount	:: Bool
 	, optKeywords	:: [String]
 	, optTasks	:: Bool
-	} deriving Show
+	}
+
+instance Show Options where
+	show o =
+	  "-v " ++ (show $ optVerbose o) ++ "\n" ++
+	  "-C " ++ (optConfigPath o) ++ "\n" ++
+	  "-f " ++ (optFeedsPath o) ++ "\n" ++
+	  "-p " ++ (show $ optPrint o) ++ "\n" ++
+	  "-c " ++ (show $ optCount o) ++ "\n" ++
+	  "keywords " ++ (unwords $ optKeywords o) ++ "\n" ++
+	  "-t " ++ (show $ optTasks o)
 
 defaultOptions :: Options
 defaultOptions = Options
