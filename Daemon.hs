@@ -52,7 +52,7 @@ getFeedTitleStrings prox url = do
 	return $ map (fromTagText . (!! 1)) titles
 
 printFeedTitleStrings :: [String] -> IO ()
-printFeedTitleStrings s = mapM_ putStrLn s
+printFeedTitleStrings = mapM_ putStrLn
 
 getPage :: Proxy -> String -> IO String
 getPage prox url = do
@@ -63,7 +63,7 @@ getPage prox url = do
 	return (rspBody rsp)
 
 prepareNewsData :: [[String]] -> [String]
-prepareNewsData news = map lowerString $ flatten news
+prepareNewsData = map lowerString . flatten
 
 countWordsInWordsVerb :: [String] -> [String] -> [(Int, [String])]
 countWordsInWordsVerb [] _      = []
