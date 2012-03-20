@@ -10,6 +10,7 @@ import Network.HTTP
 import Network.Browser
 import System.Process (runCommand)
 import Text.HTML.TagSoup
+import Text.Regex.Posix ((=~))
 
 import Conf
 
@@ -71,20 +72,6 @@ countWordsInWords _ [] = []
 countWordsInWords (x:xs) ws =
 	(countWordInWords' x ws) : (countWordsInWords xs ws)
 
-countWordInWords :: String -> [String] -> Int
-countWordInWords "" _ = 0
-countWordInWords _ [] = 0
-countWordInWords w ws = helper (T.pack (lowerString w)) 0 (map T.pack ws)
-	where
-	  helper :: T.Text -> Int -> [T.Text] -> Int
-	  helper _ _ []	         = 0
-	  helper w' i [(x)]
-	    | (T.isInfixOf w' x) = (i+1)
-	    | otherwise          = i
-	  helper w' i (x:xs)
-	    | (T.isInfixOf w' x) = helper w' (i+1) xs
-	    | otherwise          = helper w' i xs
-
 countWordInWords' :: String -> [String] -> (Int, [T.Text])
 countWordInWords' "" _ = (0, [])
 countWordInWords' _ [] = (0, [])
@@ -98,6 +85,10 @@ countWordInWords' w ws = helper (T.pack (lowerString w)) (0, []) (map T.pack ws)
 	  helper w' (i, ins) (x:xs)
 	    | (T.isInfixOf w' x) = helper w' ((i+1), (x : ins)) xs
 	    | otherwise          = helper w' (i, ins) xs
+
+countWordInWords :: String -> [String] -> Int
+countWordInWords "" _ = 0
+countWordInWords word news = sum $ map (flip (=~) word) news
 
 comb :: (String, Int) -> String
 comb (a, b) = a ++ "\t" ++ (show b)
