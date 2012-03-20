@@ -5,7 +5,6 @@ module Daemon
 ) where
 
 import Data.Char
-import qualified Data.Text as T
 import Network.HTTP
 import Network.Browser
 import System.Process (runCommand)
@@ -23,9 +22,9 @@ countAndPrint :: Conf -> [String] -> IO ()
 countAndPrint conf keywords = do
 	ts <- mapM (getFeedTitleStrings (proxy conf)) (urls conf)
 	let flattened_ts = prepareNewsData ts
-	let counts = countWordsInWords keywords flattened_ts
+	let counts = countWordsInWordsVerb keywords flattened_ts
 	if optVerbose (opts conf) == True
-	  then mapM_ (putStrLn . comb') $ zip keywords counts
+	  then mapM_ (putStrLn . combVerb) $ zip keywords counts
 	  else mapM_ (putStrLn . comb) $ zip keywords (map fst counts)
 
 runTasks :: Conf -> IO ()
@@ -66,35 +65,35 @@ getPage prox url = do
 prepareNewsData :: [[String]] -> [String]
 prepareNewsData news = map lowerString $ flatten news
 
-countWordsInWords :: [String] -> [String] -> [(Int, [T.Text])]
-countWordsInWords [] _ = []
-countWordsInWords _ [] = []
-countWordsInWords (x:xs) ws =
-	(countWordInWords' x ws) : (countWordsInWords xs ws)
+countWordsInWordsVerb :: [String] -> [String] -> [(Int, [String])]
+countWordsInWordsVerb [] _      = []
+countWordsInWordsVerb _ []      = []
+countWordsInWordsVerb (x:xs) ws =
+	(countWordInWordsVerb x ws) : (countWordsInWordsVerb xs ws)
 
-countWordInWords' :: String -> [String] -> (Int, [T.Text])
-countWordInWords' "" _ = (0, [])
-countWordInWords' _ [] = (0, [])
-countWordInWords' w ws = helper (T.pack (lowerString w)) (0, []) (map T.pack ws)
+countWordInWordsVerb :: String -> [String] -> (Int, [String])
+countWordInWordsVerb "" _ = (0, [])
+countWordInWordsVerb _ [] = (0, [])
+countWordInWordsVerb w ws = helper (lowerString w) (0, []) ws
 	where
-	  helper :: T.Text -> (Int, [T.Text]) -> [T.Text] -> (Int, [T.Text])
-	  helper _ _ []          = (0, [])
+	  helper :: String -> (Int, [String]) -> [String] -> (Int, [String])
+	  helper _ _ [] = (0, [])
 	  helper w' (i, ins) [(x)]
-	    | (T.isInfixOf w' x) = ((i+1), (x : ins))
-	    | otherwise		 = (i, ins)
+	    | (x =~ w') = ((i+1), (x : ins))
+	    | otherwise = (i, ins)
 	  helper w' (i, ins) (x:xs)
-	    | (T.isInfixOf w' x) = helper w' ((i+1), (x : ins)) xs
-	    | otherwise          = helper w' (i, ins) xs
+	    | (x =~ w') = helper w' ((i+1), (x : ins)) xs
+	    | otherwise = helper w' (i, ins) xs
 
 countWordInWords :: String -> [String] -> Int
-countWordInWords "" _ = 0
+countWordInWords "" _      = 0
 countWordInWords word news = sum $ map (flip (=~) word) news
 
 comb :: (String, Int) -> String
 comb (a, b) = a ++ "\t" ++ (show b)
 	
-comb' :: (String, (Int, [T.Text])) -> String
-comb' (a, b) = a ++ "\t" ++ (show $ fst b) ++ "\n" ++ (show $ snd b)
+combVerb :: (String, (Int, [String])) -> String
+combVerb (a, b) = a ++ "\t" ++ (show $ fst b) ++ "\n" ++ (show $ snd b)
 
 flatten :: [[a]] -> [a]
 flatten = foldl (++) []
