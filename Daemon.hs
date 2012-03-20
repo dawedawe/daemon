@@ -66,13 +66,10 @@ prepareNewsData :: [[String]] -> [String]
 prepareNewsData news = map lowerString $ flatten news
 
 countWordsInWords :: [String] -> [String] -> [(Int, [T.Text])]
-countWordsInWords swords wrds = countWordsInWords' swords wrds
-	where
-	  countWordsInWords' :: [String] -> [String] -> [(Int, [T.Text])]
-	  countWordsInWords' [] _ = []
-	  countWordsInWords' _ [] = []
-	  countWordsInWords' (x:xs) ws =
-	    (countWordInWords' x ws) : (countWordsInWords' xs ws)
+countWordsInWords [] _ = []
+countWordsInWords _ [] = []
+countWordsInWords (x:xs) ws =
+	(countWordInWords' x ws) : (countWordsInWords xs ws)
 
 countWordInWords :: String -> [String] -> Int
 countWordInWords "" _ = 0
