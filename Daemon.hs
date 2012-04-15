@@ -93,7 +93,13 @@ comb :: (String, Int) -> String
 comb (a, b) = a ++ "\t" ++ (show b)
 	
 combVerb :: (String, (Int, [String])) -> String
-combVerb (a, b) = a ++ "\t" ++ (show $ fst b) ++ "\n" ++ (show $ snd b)
+combVerb (a, b) = a ++ "\t" ++ (show $ fst b) ++ "\n" ++ (flat $ appNewLine $ snd b)
+	where
+	appNewLine :: [String] -> [String]
+	appNewLine = map (++ "\n") 
+	flat :: [String] -> String
+	flat = foldl (++) ""
+
 
 flatten :: [[a]] -> [a]
 flatten = foldl (++) []
