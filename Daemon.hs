@@ -63,7 +63,7 @@ getPage prox url = do
 	return (rspBody rsp)
 
 prepareNewsData :: [[String]] -> [String]
-prepareNewsData = map lowerString . flatten
+prepareNewsData = map lowerString . concat
 
 countWordsInWordsVerb :: [String] -> [String] -> [(Int, [String])]
 countWordsInWordsVerb [] _      = []
@@ -99,10 +99,6 @@ combVerb (a, b) = a ++ "\t" ++ (show $ fst b) ++ "\n" ++ (flat $ appNewLine $ sn
 	appNewLine = map (++ "\n") 
 	flat :: [String] -> String
 	flat = foldl (++) ""
-
-
-flatten :: [[a]] -> [a]
-flatten = foldl (++) []
 
 lowerString :: String -> String
 lowerString = map toLower
