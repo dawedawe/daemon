@@ -1,26 +1,19 @@
+import Control.Monad (when)
 import System.Environment
 import System.Console.GetOpt()
 
-import Daemon
 import Conf
+import Daemon
 
 main :: IO ()
 main = do
-	parsedArgv <- (getArgs >>= parseArgv)
+	parsedArgv <- getArgs >>= parseArgv
 	let parsedOptions = fst parsedArgv
 
-	if (optVerbose parsedOptions)
-	  then putStrLn $ show parsedOptions
-	  else return ()
+	when (optVerbose parsedOptions) (print parsedOptions)
 
 	conf <- buildConf parsedOptions
-	if (optPrint $ opts $ conf)
-	  then getAndPrintHeadlines conf
-	  else return ()
-	if (optCount $ opts $ conf)
-	  then countAndPrint conf (optKeywords parsedOptions)
-	  else return ()
-	if (optTasks $ opts $ conf)
-	  then runTasks conf
-	  else return ()
+	when (optPrint $ opts conf) (getAndPrintHeadlines conf)
+	when (optCount $ opts conf) (countAndPrint conf (optKeywords parsedOptions))
+	when (optTasks $ opts conf) (runTasks conf)
 
