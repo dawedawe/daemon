@@ -23,7 +23,7 @@ countAndPrint conf keywords = do
 	ts <- mapM (getFeedTitleStrings (proxy conf)) (urls conf)
 	let flattened_ts = prepareNewsData ts
 	let counts = countWordsInWordsVerb keywords flattened_ts
-	if optVerbose (opts conf) == True
+	if optVerbose (opts conf)
 	  then mapM_ (putStrLn . combVerb) $ zip keywords counts
 	  else mapM_ (putStrLn . comb) $ zip keywords (map fst counts)
 
@@ -36,14 +36,14 @@ runTasks conf = do
 runTask :: [String] -> Task -> IO ()
 runTask news t = do
 	let count = countWordInWords (keyword t) news
-	if count >= (threshold t)
+	if count >= threshold t
 	  then do
-	    putStrLn ("Threshold " ++ (show (threshold t)) ++
-	      " exceeded for " ++ (keyword t))
+	    putStrLn $ "Threshold " ++ show (threshold t) ++
+	      " exceeded for " ++ keyword t
 	    _ <- runCommand $ action t
 	    return ()
-	  else putStrLn ("Threshold " ++ (show (threshold t)) ++
-	         " not exceeded for " ++ (keyword t))
+	  else putStrLn $ "Threshold " ++ show (threshold t) ++
+	         " not exceeded for " ++ keyword t
 
 getFeedTitleStrings :: Proxy -> String -> IO [String]
 getFeedTitleStrings prox url = do
@@ -69,7 +69,7 @@ countWordsInWordsVerb :: [String] -> [String] -> [(Int, [String])]
 countWordsInWordsVerb [] _      = []
 countWordsInWordsVerb _ []      = []
 countWordsInWordsVerb (x:xs) ws =
-	(countWordInWordsVerb x ws) : (countWordsInWordsVerb xs ws)
+	countWordInWordsVerb x ws : countWordsInWordsVerb xs ws
 
 countWordInWordsVerb :: String -> [String] -> (Int, [String])
 countWordInWordsVerb "" _ = (0, [])
@@ -78,22 +78,22 @@ countWordInWordsVerb w ws = helper (lowerString w) (0, []) ws
 	where
 	  helper :: String -> (Int, [String]) -> [String] -> (Int, [String])
 	  helper _ _ [] = (0, [])
-	  helper w' (i, ins) [(x)]
-	    | (x =~ w') = ((i+1), (x : ins))
+	  helper w' (i, ins) [x]
+	    | x =~ w'   = (i + 1, x : ins)
 	    | otherwise = (i, ins)
 	  helper w' (i, ins) (x:xs)
-	    | (x =~ w') = helper w' ((i+1), (x : ins)) xs
+	    | x =~ w'   = helper w' (i + 1, x : ins) xs
 	    | otherwise = helper w' (i, ins) xs
 
 countWordInWords :: String -> [String] -> Int
 countWordInWords "" _      = 0
-countWordInWords word news = sum $ map (flip (=~) word) news
+countWordInWords word news = sum $ map (=~ word) news
 
 comb :: (String, Int) -> String
-comb (a, b) = a ++ "\t" ++ (show b)
+comb (a, b) = a ++ "\t" ++ show b
 	
 combVerb :: (String, (Int, [String])) -> String
-combVerb (a, b) = a ++ "\t" ++ (show $ fst b) ++ "\n" ++ (flat $ appNewLine $ snd b)
+combVerb (a, b) = a ++ "\t" ++ show (fst b) ++ "\n" ++ flat (appNewLine $ snd b)
 	where
 	appNewLine :: [String] -> [String]
 	appNewLine = map (++ "\n") 
