@@ -15,12 +15,12 @@ import Conf
 
 getAndPrintHeadlines :: Conf -> IO ()
 getAndPrintHeadlines conf = do
-	ts <- mapM (getFeedTitleStrings (proxy conf)) (urls conf)
-	mapM_ printFeedTitleStrings ts
+	ts <- mapM (getFeedTitles (proxy conf)) (urls conf)
+	mapM_ printFeedTitles ts
 
 countAndPrint :: Conf -> [String] -> IO ()
 countAndPrint conf keywords = do
-	ts <- mapM (getFeedTitleStrings (proxy conf)) (urls conf)
+	ts <- mapM (getFeedTitles (proxy conf)) (urls conf)
 	let flattened_ts = prepareNewsData ts
 	let counts = countWordsInWordsVerb keywords flattened_ts
 	if optVerbose (opts conf)
@@ -29,7 +29,7 @@ countAndPrint conf keywords = do
 
 runTasks :: Conf -> IO ()
 runTasks conf = do
-	ts <- mapM (getFeedTitleStrings (proxy conf)) (urls conf)
+	ts <- mapM (getFeedTitles (proxy conf)) (urls conf)
 	let lfts = prepareNewsData ts
 	mapM_ (runTask lfts) (tasks conf)
 
@@ -45,14 +45,14 @@ runTask news t = do
 	  else putStrLn $ "Threshold " ++ show (threshold t) ++
 	         " not exceeded for " ++ keyword t
 
-getFeedTitleStrings :: Proxy -> String -> IO [String]
-getFeedTitleStrings prox url = do
+getFeedTitles :: Proxy -> String -> IO [String]
+getFeedTitles prox url = do
 	tags <- fmap parseTags $ getPage prox url
 	let titles = partitions (~== "<title>") tags
 	return $ map (fromTagText . (!! 1)) titles
 
-printFeedTitleStrings :: [String] -> IO ()
-printFeedTitleStrings = mapM_ putStrLn
+printFeedTitles :: [String] -> IO ()
+printFeedTitles = mapM_ putStrLn
 
 getPage :: Proxy -> String -> IO String
 getPage prox url = do
@@ -95,10 +95,10 @@ comb (a, b) = a ++ "\t" ++ show b
 combVerb :: (String, (Int, [String])) -> String
 combVerb (a, b) = a ++ "\t" ++ show (fst b) ++ "\n" ++ flat (appNewLine $ snd b)
 	where
-	appNewLine :: [String] -> [String]
-	appNewLine = map (++ "\n") 
-	flat :: [String] -> String
-	flat = foldl (++) ""
+	  appNewLine :: [String] -> [String]
+	  appNewLine = map (++ "\n") 
+	  flat :: [String] -> String
+	  flat = foldl (++) ""
 
 lowerString :: String -> String
 lowerString = map toLower
