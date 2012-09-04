@@ -13,19 +13,22 @@ import Text.Regex.Posix ((=~))
 
 import Conf
 
+type Keyword = String
+type Title   = String
+
 getAndPrintHeadlines :: Conf -> IO ()
 getAndPrintHeadlines conf = do
 	ts <- mapM (getFeedTitles (proxy conf)) (urls conf)
 	mapM_ printFeedTitles ts
 
-countAndPrint :: Conf -> [String] -> IO ()
+countAndPrint :: Conf -> [Keyword] -> IO ()
 countAndPrint conf keywords = do
 	ts <- mapM (getFeedTitles (proxy conf)) (urls conf)
 	let flattened_ts = prepareNewsData ts
-	let counts = countWordsInWordsVerb keywords flattened_ts
+	let stats        = keywordStats keywords flattened_ts
 	if optVerbose (opts conf)
-	  then mapM_ (putStrLn . combVerb) $ zip keywords counts
-	  else mapM_ (putStrLn . comb) $ zip keywords (map fst counts)
+	  then mapM_ (putStrLn . statLayoutVerbose) stats
+	  else mapM_ (putStrLn . statLayoutShort) stats
 
 runTasks :: Conf -> IO ()
 runTasks conf = do
@@ -33,17 +36,17 @@ runTasks conf = do
 	let lfts = prepareNewsData ts
 	mapM_ (runTask lfts) (tasks conf)
 
-runTask :: [String] -> Task -> IO ()
-runTask news t = do
-	let count = countWordInWords (keyword t) news
+runTask :: [Title] -> Task -> IO ()
+runTask titles t = do
+	let (_, count, _) = singleKeywordStats titles (keyword t)
 	if count >= threshold t
 	  then do
-	    putStrLn $ "Threshold " ++ show (threshold t) ++
-	      " exceeded for " ++ keyword t
+	    putStrLn $ "threshold " ++ show (threshold t) ++
+	      " reached for " ++ keyword t ++ " (" ++ show count ++ ")"
 	    _ <- runCommand $ action t
 	    return ()
-	  else putStrLn $ "Threshold " ++ show (threshold t) ++
-	         " not exceeded for " ++ keyword t
+	  else putStrLn $ "threshold " ++ show (threshold t) ++
+	         " not reached for " ++ keyword t ++ " (" ++ show count ++ ")"
 
 getFeedTitles :: Proxy -> String -> IO [String]
 getFeedTitles prox url = do
@@ -65,41 +68,32 @@ getPage prox url = do
 prepareNewsData :: [[String]] -> [String]
 prepareNewsData = map lowerString . concat
 
-countWordsInWordsVerb :: [String] -> [String] -> [(Int, [String])]
-countWordsInWordsVerb [] _      = []
-countWordsInWordsVerb _ []      = []
-countWordsInWordsVerb (x:xs) ws =
-	countWordInWordsVerb x ws : countWordsInWordsVerb xs ws
+lowerString :: String -> String
+lowerString = map toLower
 
-countWordInWordsVerb :: String -> [String] -> (Int, [String])
-countWordInWordsVerb "" _ = (0, [])
-countWordInWordsVerb _ [] = (0, [])
-countWordInWordsVerb w ws = helper (lowerString w) (0, []) ws
-	where
-	  helper :: String -> (Int, [String]) -> [String] -> (Int, [String])
-	  helper _ _ [] = (0, [])
-	  helper w' (i, ins) [x]
-	    | x =~ w'   = (i + 1, x : ins)
-	    | otherwise = (i, ins)
-	  helper w' (i, ins) (x:xs)
-	    | x =~ w'   = helper w' (i + 1, x : ins) xs
-	    | otherwise = helper w' (i, ins) xs
-
-countWordInWords :: String -> [String] -> Int
-countWordInWords "" _      = 0
-countWordInWords word news = sum $ map (=~ word) news
-
-comb :: (String, Int) -> String
-comb (a, b) = a ++ "\t" ++ show b
+-- combine a stat tuple to a short string without the titles
+statLayoutShort :: (Keyword, Int, [Title]) -> String
+statLayoutShort (a, b, _) = a ++ "\t" ++ show b
 	
-combVerb :: (String, (Int, [String])) -> String
-combVerb (a, b) = a ++ "\t" ++ show (fst b) ++ "\n" ++ flat (appNewLine $ snd b)
+-- combine a stat tuple to a verbose string
+statLayoutVerbose :: (Keyword, Int, [Title]) -> String
+statLayoutVerbose (a, b, c) =
+    a ++ "\t" ++ show b ++ "\n" ++ flatten (appNewLine c)
 	where
 	  appNewLine :: [String] -> [String]
 	  appNewLine = map (++ "\n") 
-	  flat :: [String] -> String
-	  flat = foldl (++) ""
+	  flatten :: [String] -> String
+	  flatten = foldl (++) ""
 
-lowerString :: String -> String
-lowerString = map toLower
+-- stats for all given keywords
+keywordStats :: [Keyword] -> [String] -> [(Keyword, Int, [Title])]
+keywordStats kwords titles = map (singleKeywordStats titles) kwords
+ 
+-- stats for a single keyword in title list, count appearances in a title only
+-- once
+singleKeywordStats :: [Title] -> Keyword -> (Keyword, Int, [Title])
+singleKeywordStats titles kword =
+    let hits  = filter (=~ kword) titles
+        count = length hits
+    in (kword, count, hits)
 
