@@ -7,13 +7,12 @@ import Daemon
 
 main :: IO ()
 main = do
-	parsedArgv <- getArgs >>= parseArgv
-	let parsedOptions = fst parsedArgv
-
-	when (optVerbose parsedOptions) (print parsedOptions)
-
-	conf <- buildConf parsedOptions
-	when (optPrint $ opts conf) (getAndPrintHeadlines conf)
-	when (optCount $ opts conf) (countAndPrint conf (optKeywords parsedOptions))
-	when (optTasks $ opts conf) (runTasks conf)
+    parsedArgv <- getArgs >>= parseArgv
+    let parsedOptions = fst parsedArgv
+    createDotDir
+    when (optVerbose parsedOptions) (print parsedOptions)
+    conf <- buildConf parsedOptions
+    when (optPrint $ opts conf) (getAndPrintHeadlines conf)
+    when (optCount $ opts conf) (countAndPrint conf (optKeywords parsedOptions))
+    when (optTasks $ opts conf) (runTasks conf)
 

@@ -3,36 +3,42 @@ module Conf
 , Options (..)
 , Task (..)
 , buildConf
+, createDotDir
 , parseArgv
 ) where
 
+import Control.Monad (unless)
 import qualified Data.ConfigFile as CF
 import Data.Either.Utils (forceEither)
+import Data.Maybe (isNothing)
 import Network.Browser
 import System.Console.GetOpt
+import System.Directory (createDirectoryIfMissing, doesDirectoryExist,
+    getAppUserDataDirectory)
+import System.FilePath (pathSeparator)
 
 data Conf = Conf {
-      opts      :: Options
-    , proxy     :: Proxy
-    , urls      :: [String]
-    , tasks     :: [Task]
-    }
+            opts      :: Options
+          , proxy     :: Proxy
+          , urls      :: [String]
+          , tasks     :: [Task]
+          }
 
 data Task = Task {
-      keyword   :: String
-    , threshold :: Int
-    , action    :: String
-    }
+            keyword   :: String
+          , threshold :: Int
+          , action    :: String
+          }
 
 data Options = Options {
-      optVerbose    :: Bool
-    , optConfigPath :: FilePath
-    , optFeedsPath  :: FilePath
-    , optPrint      :: Bool
-    , optCount      :: Bool
-    , optKeywords   :: [String]
-    , optTasks      :: Bool
-    }
+               optVerbose    :: Bool
+             , optConfigPath :: FilePath
+             , optFeedsPath  :: FilePath
+             , optPrint      :: Bool
+             , optCount      :: Bool
+             , optKeywords   :: [String]
+             , optTasks      :: Bool
+             }
 
 instance Show Options where
     show o =
@@ -44,11 +50,12 @@ instance Show Options where
       "keywords " ++ unwords (optKeywords o) ++ "\n" ++
       "-t " ++ show (optTasks o)
 
-defaultOptions :: Options
-defaultOptions = Options {
+-- |Default cli options, used if none given.
+defaultOptions :: FilePath -> Options
+defaultOptions p = Options {
       optVerbose    = False
-    , optConfigPath = "./daemon.conf"
-    , optFeedsPath  = "./feeds"
+    , optConfigPath = p ++ [pathSeparator] ++ "daemon.conf"
+    , optFeedsPath  = p ++ [pathSeparator] ++ "feeds"
     , optPrint      = False
     , optCount      = False
     , optKeywords   = []
@@ -79,10 +86,11 @@ options = [
     ]
 
 parseArgv :: [String] -> IO (Options, [String]) 
-parseArgv argv =
+parseArgv argv = do
     let opt = getOpt RequireOrder options argv
-    in  case opt of
-          (o,n,[]  ) -> return (foldl (flip id) defaultOptions o, n)
+    dDir <- dotDirPath 
+    case opt of
+          (o,n,[]  ) -> return (foldl (flip id) (defaultOptions dDir) o, n)
           (_,_,errs) -> ioError
             (userError (concat errs ++ usageInfo header options))
             where header = "Usage: daemon [-v] [-f feedspath] " ++
@@ -115,7 +123,7 @@ getTasks confitems =
     where
       getTasks' :: [(CF.OptionSpec, String)] -> Int -> [Task]
       getTasks' items i =
-        if lookup ("keyword" ++ show i) items == Nothing
+        if isNothing (lookup ("keyword" ++ show i) items)
           then []
           else getTask items i : getTasks' items (i+1)
 
@@ -136,4 +144,27 @@ getUrls = fmap lines . readFile
 checkConfItem :: Maybe String -> String -> String
 checkConfItem (Just s) _       = s
 checkConfItem Nothing itemName = error $ "failed to parse " ++ itemName
+
+-- |Create dotdir with a default config file.
+createDotDir :: IO ()
+createDotDir = do
+    dDir   <- dotDirPath
+    exists <- doesDirectoryExist dDir
+    createDirectoryIfMissing (not exists) dDir
+    let cPath = dDir ++ [pathSeparator] ++ "daemon.conf"
+    unless exists $ writeFile cPath (defaultConf dDir)
+
+-- |Default path to application data directory aka the dotdir.
+dotDirPath :: IO String
+dotDirPath = getAppUserDataDirectory "daemon"
+
+defaultConf :: FilePath -> String
+defaultConf dDir =
+    "#proxy = 127.0.0.1:8118\n" ++
+    "#keyword1 = nasa\n" ++
+    "#keyword1_threshold = 1\n" ++
+    "#keyword1_action = xeyes\n" ++
+    "#keyword2 = mars\n" ++
+    "#keyword2_threshold = 1\n" ++
+    "#keyword2_action = xeyes"
 
