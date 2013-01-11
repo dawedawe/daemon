@@ -85,6 +85,7 @@ options = [
       "run tasks"
     ]
 
+-- |Parse the cli argument vector.
 parseArgv :: [String] -> IO (Options, [String]) 
 parseArgv argv = do
     let opt = getOpt RequireOrder options argv
@@ -96,6 +97,7 @@ parseArgv argv = do
             where header = "Usage: daemon [-v] [-f feedspath] " ++
                     "[-p | -c word -c ... | -t]"
 
+-- |Build Conf out of cli options and config file definitions.
 buildConf :: Options -> IO Conf
 buildConf o = do
     items    <- getConfItems $ optConfigPath o
@@ -104,6 +106,7 @@ buildConf o = do
     let ts   = getTasks items
     return $ Conf o prx feedurls ts
 
+-- |Read config items out of config file.
 getConfItems :: FilePath -> IO [(CF.OptionSpec, String)]
 getConfItems path = do
     val    <- CF.readfile CF.emptyCP path
@@ -127,6 +130,7 @@ getTasks confitems =
           then []
           else getTask items i : getTasks' items (i+1)
 
+-- |Construct a Task out of the config file definitions
 getTask :: [(CF.OptionSpec, String)] -> Int -> Task
 getTask items n =
     let
@@ -138,6 +142,7 @@ getTask items n =
       act        = checkConfItem (lookup actionN items) actionN
     in Task kwd thd act
 
+-- |Read the urls of the feeds file
 getUrls :: FilePath -> IO [String]
 getUrls = fmap lines . readFile
 

@@ -71,11 +71,11 @@ prepareNewsData = map lowerString . concat
 lowerString :: String -> String
 lowerString = map toLower
 
--- combine a stat tuple to a short string without the titles
+-- |Combine a stat tuple to a short string without the titles
 statLayoutShort :: (Keyword, Int, [Title]) -> String
 statLayoutShort (a, b, _) = a ++ "\t" ++ show b
 	
--- combine a stat tuple to a verbose string
+-- |Combine a stat tuple to a verbose string
 statLayoutVerbose :: (Keyword, Int, [Title]) -> String
 statLayoutVerbose (a, b, c) =
     a ++ "\t" ++ show b ++ "\n" ++ flatten (appNewLine c)
@@ -85,11 +85,11 @@ statLayoutVerbose (a, b, c) =
 	  flatten :: [String] -> String
 	  flatten = foldl (++) ""
 
--- stats for all given keywords
+-- |Stats for all given keywords
 keywordStats :: [Keyword] -> [String] -> [(Keyword, Int, [Title])]
 keywordStats kwords titles = map (singleKeywordStats titles) kwords
  
--- stats for a single keyword in title list, count appearances in a title only
+-- |Stats for a single keyword in title list, count appearances in a title only
 -- once
 singleKeywordStats :: [Title] -> Keyword -> (Keyword, Int, [Title])
 singleKeywordStats titles kword =
