@@ -4,6 +4,7 @@ module Daemon
 , runTasks
 ) where
 
+import Control.Monad (when)
 import Data.Char
 import Network.HTTP
 import Network.Browser
@@ -44,12 +45,9 @@ runTask :: [Title] -> Task -> IO ()
 runTask titles t = do
     let (_, count, _) = singleKeywordStats titles (keyword t)
     putStrLn (thresholdDispString t count)
-    if count >= threshold t
-      then do
-        _ <- runCommand (action t)
-        return ()
-      else 
-        return ()
+    when (count >= threshold t) $
+      do _ <- runCommand (action t)
+         return ()
 
 -- |Build display string for a task according to it's threshold and the count.
 thresholdDispString :: Task -> Int -> String
