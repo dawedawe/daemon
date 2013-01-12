@@ -57,16 +57,15 @@ thresholdDispString (Task kw th _) cnt =
     let n = if cnt < th then " not" else ""
     in  "threshold " ++ show th ++ n ++ " reached for " ++ kw ++
           " (" ++ show cnt ++ ")"
-	
+
+-- |Parse the titles out of the feed page, using a proxy if set.
 getFeedTitles :: Proxy -> String -> IO [String]
 getFeedTitles prox url = do
 	tags <- fmap parseTags $ getPage prox url
 	let titles = partitions (~== "<title>") tags
 	return $ map (fromTagText . (!! 1)) titles
 
-printFeedTitles :: [String] -> IO ()
-printFeedTitles = mapM_ putStrLn
-
+-- |Get the page using a proxy if set.
 getPage :: Proxy -> String -> IO String
 getPage prox url = do
 	(_,rsp) <- Network.Browser.browse $ do
@@ -75,17 +74,23 @@ getPage prox url = do
 	  request (getRequest url)
 	return (rspBody rsp)
 
+-- |Print all titles to stdout.
+printFeedTitles :: [String] -> IO ()
+printFeedTitles = mapM_ putStrLn
+
+-- |Concat and lowerString everything.
 prepareNewsData :: [[String]] -> [String]
 prepareNewsData = map lowerString . concat
 
+-- |Transform a whole String to lower case.
 lowerString :: String -> String
 lowerString = map toLower
 
--- |Combine a stat tuple to a short string without the titles
+-- |Combine a stat tuple to a short string without the titles.
 statLayoutShort :: (Keyword, Int, [Title]) -> String
 statLayoutShort (a, b, _) = a ++ "\t" ++ show b
 	
--- |Combine a stat tuple to a verbose string
+-- |Combine a stat tuple to a verbose string.
 statLayoutVerbose :: (Keyword, Int, [Title]) -> String
 statLayoutVerbose (a, b, c) =
     a ++ "\t" ++ show b ++ "\n" ++ flatten (appNewLine c)
@@ -95,15 +100,16 @@ statLayoutVerbose (a, b, c) =
 	  flatten :: [String] -> String
 	  flatten = foldl (++) ""
 
--- |Stats for all given keywords
+-- |Stats for all given keywords.
 keywordStats :: [Keyword] -> [String] -> [(Keyword, Int, [Title])]
 keywordStats kwords titles = map (singleKeywordStats titles) kwords
  
 -- |Stats for a single keyword in title list, count appearances in a title only
--- once
+-- once.
 singleKeywordStats :: [Title] -> Keyword -> (Keyword, Int, [Title])
 singleKeywordStats titles kword =
-    let hits  = filter (=~ kword) titles
-        count = length hits
+    let
+      hits  = filter (=~ kword) titles
+      count = length hits
     in (kword, count, hits)
 

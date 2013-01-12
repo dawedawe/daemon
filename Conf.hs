@@ -177,6 +177,6 @@ defaultConf =
     "#keyword2_threshold = 1\n" ++
     "#keyword2_action = xeyes"
 
--- |Default feeds
+-- |Default feeds for the default dotdir creation.
 defaultFeeds :: String
 defaultFeeds = "http://feeds.bbci.co.uk/news/rss.xml"
