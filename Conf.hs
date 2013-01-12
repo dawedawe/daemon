@@ -55,7 +55,7 @@ defaultOptions :: FilePath -> Options
 defaultOptions p = Options {
       optVerbose    = False
     , optConfigPath = p ++ [pathSeparator] ++ "daemon.conf"
-    , optFeedsPath  = p ++ [pathSeparator] ++ "feeds"
+    , optFeedsPath  = p ++ [pathSeparator] ++ "daemon.feeds"
     , optPrint      = False
     , optCount      = False
     , optKeywords   = []
@@ -157,14 +157,18 @@ createDotDir = do
     exists <- doesDirectoryExist dDir
     createDirectoryIfMissing (not exists) dDir
     let cPath = dDir ++ [pathSeparator] ++ "daemon.conf"
-    unless exists $ writeFile cPath (defaultConf dDir)
+    let fPath = dDir ++ [pathSeparator] ++ "daemon.feeds"
+    unless exists $ do
+                      writeFile cPath defaultConf
+                      writeFile fPath defaultFeeds
 
 -- |Default path to application data directory aka the dotdir.
 dotDirPath :: IO String
 dotDirPath = getAppUserDataDirectory "daemon"
 
-defaultConf :: FilePath -> String
-defaultConf dDir =
+-- |Default configuration with proxy and keyword example.
+defaultConf :: String
+defaultConf =
     "#proxy = 127.0.0.1:8118\n" ++
     "#keyword1 = nasa\n" ++
     "#keyword1_threshold = 1\n" ++
@@ -173,3 +177,6 @@ defaultConf dDir =
     "#keyword2_threshold = 1\n" ++
     "#keyword2_action = xeyes"
 
+-- |Default feeds
+defaultFeeds :: String
+defaultFeeds = "http://feeds.bbci.co.uk/news/rss.xml"

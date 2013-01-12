@@ -36,18 +36,25 @@ runTasks conf = do
 	let lfts = prepareNewsData ts
 	mapM_ (runTask lfts) (tasks conf)
 
+-- |Run a Task if it's threshold is reached and print a message to stdout.
 runTask :: [Title] -> Task -> IO ()
 runTask titles t = do
-	let (_, count, _) = singleKeywordStats titles (keyword t)
-	if count >= threshold t
-	  then do
-	    putStrLn $ "threshold " ++ show (threshold t) ++
-	      " reached for " ++ keyword t ++ " (" ++ show count ++ ")"
-	    _ <- runCommand $ action t
-	    return ()
-	  else putStrLn $ "threshold " ++ show (threshold t) ++
-	         " not reached for " ++ keyword t ++ " (" ++ show count ++ ")"
+    let (_, count, _) = singleKeywordStats titles (keyword t)
+    putStrLn (thresholdDispString t count)
+    if count >= threshold t
+      then do
+        _ <- runCommand (action t)
+        return ()
+      else 
+        return ()
 
+-- |Build display string for a task according to it's threshold and the count.
+thresholdDispString :: Task -> Int -> String
+thresholdDispString (Task kw th _) cnt =
+    let n = if cnt < th then " not" else ""
+    in  "threshold " ++ show th ++ n ++ " reached for " ++ kw ++
+          " (" ++ show cnt ++ ")"
+	
 getFeedTitles :: Proxy -> String -> IO [String]
 getFeedTitles prox url = do
 	tags <- fmap parseTags $ getPage prox url
