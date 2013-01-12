@@ -16,11 +16,13 @@ import Conf
 type Keyword = String
 type Title   = String
 
+-- |Get the feed titles and print them.
 getAndPrintHeadlines :: Conf -> IO ()
 getAndPrintHeadlines conf = do
 	ts <- mapM (getFeedTitles (proxy conf)) (urls conf)
 	mapM_ printFeedTitles ts
 
+-- |Get the feed titles, count the keyword appearances and print the result.
 countAndPrint :: Conf -> [Keyword] -> IO ()
 countAndPrint conf keywords = do
 	ts <- mapM (getFeedTitles (proxy conf)) (urls conf)
@@ -30,6 +32,7 @@ countAndPrint conf keywords = do
 	  then mapM_ (putStrLn . statLayoutVerbose) stats
 	  else mapM_ (putStrLn . statLayoutShort) stats
 
+-- |Get the feed titles and process the tasks configuration
 runTasks :: Conf -> IO ()
 runTasks conf = do
 	ts <- mapM (getFeedTitles (proxy conf)) (urls conf)
