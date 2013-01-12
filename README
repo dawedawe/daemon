@@ -1,0 +1,48 @@
+1. Installation
+
+The easiest way to use daemon is to install the haskell plattform and then use
+cabal to install daemon:
+$ cabal install daemon-x.y.tar.gz
+
+On first run daemon will create a dot directory with a default config and a
+default feeds file in your home directory.
+
+2. Usage: daemon [-v | --verbose] [-C PATH | --config=PATH]
+                 [-f PATH | --feedspath=PATH] [-p | --print]
+                 [-c KEYWORD | count=KEYWORD ...] [-t | --tasks]
+
+-v, --VERBOSE
+               verbose output
+
+-c PATH, --config=PATH
+                Use alternative PATH as config file.
+
+-f PATH, --feedspath=PATH
+                Use alternative PATH as feeds file.
+
+-p, --print
+                Print the news titles to stdout.
+
+-c, --count=KEYWORD
+                Count the occurrences of the KEYWORD in the news. You can use
+                this option more than once if you want to count more than one
+                keyword.
+
+-t, --tasks
+                Run the configured tasks if their thresholds are exceeded.
+
+
+3. Configuration
+
+daemon can run a custom command if a keyword is found more than n times in the
+news titles. A sample configuration would be:
+
+keyword1 = mars
+keyword1_threshold = 3
+keyword1_action = xeyes
+keyword2 = saturn
+keyword2_threshold = 5
+keyword2_action = xcalc
+
+Given the -t option, daemon will start xeyes if the word mars occurs in 3 or
+more distinct news headlines.
