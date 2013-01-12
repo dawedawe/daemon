@@ -130,7 +130,7 @@ getTasks confitems =
           then []
           else getTask items i : getTasks' items (i+1)
 
--- |Construct a Task out of the config file definitions
+-- |Construct a Task out of the config file definitions.
 getTask :: [(CF.OptionSpec, String)] -> Int -> Task
 getTask items n =
     let
@@ -142,7 +142,7 @@ getTask items n =
       act        = checkConfItem (lookup actionN items) actionN
     in Task kwd thd act
 
--- |Read the urls of the feeds file
+-- |Read the urls of the feeds file.
 getUrls :: FilePath -> IO [String]
 getUrls = fmap lines . readFile
 

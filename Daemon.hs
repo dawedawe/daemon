@@ -33,7 +33,7 @@ countAndPrint conf keywords = do
 	  then mapM_ (putStrLn . statLayoutVerbose) stats
 	  else mapM_ (putStrLn . statLayoutShort) stats
 
--- |Get the feed titles and process the tasks configuration
+-- |Get the feed titles and process the tasks configuration.
 runTasks :: Conf -> IO ()
 runTasks conf = do
 	ts <- mapM (getFeedTitles (proxy conf)) (urls conf)
