@@ -7,7 +7,7 @@ module Conf
 , parseArgv
 ) where
 
-import Control.Monad (unless)
+import Control.Monad (liftM, unless)
 import qualified Data.ConfigFile as CF
 import Data.Either.Utils (forceEither)
 import Data.Maybe (isNothing)
@@ -144,7 +144,9 @@ getTask items n =
 
 -- |Read the urls of the feeds file.
 getUrls :: FilePath -> IO [String]
-getUrls = fmap lines . readFile
+getUrls =
+    liftM (filter (\x -> x /= "" && head x /= '#')) .
+      fmap lines . readFile
 
 checkConfItem :: Maybe String -> String -> String
 checkConfItem (Just s) _       = s
